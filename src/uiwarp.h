@@ -1,25 +1,23 @@
-#pragma once
+#ifndef _UI_WARP_H
+#define _UI_WARP_H
+#include <pugixml.hpp>
 #include <string>
 #include <stack>
 #include <memory>
 #include <utility>
-#include <pugixml.hpp>
 #include <cassert>
 #include <sstream>
 #include <vector>
 namespace UIWarp
 {
     using namespace pugi;
-    enum class Unit
-    {
-        px, cell, percent, auto_mode
-    };
+    enum class Unit {px, cell, percent};
     class Layout;
-    int resolve(std::string length, const Layout& parent, bool x);
+    int resolve(std::string length, const Layout& parent, bool is_x);
     namespace
     {
         const std::string Type_Grid = "grid", Type_Table = "table", Type_Control = "control";
-        std::vector<std::string> split(const std::string &s, char delim)
+        inline std::vector<std::string> split(const std::string &s, char delim)
         {
             std::vector<std::string> elems;
             std::stringstream ss;
@@ -28,12 +26,7 @@ namespace UIWarp
             while (std::getline(ss, item, delim)) elems.push_back(item);
             return elems;
         }
-        template<typename T>
-        T _get_property(const xml_node& xml, std::string name, T default_value = T())
-        {
-            assert(false); // unsupported type
-            return default_value;
-        }
+        template<typename T> T _get_property(const xml_node& xml, std::string name, T default_value = T());
         template<> int _get_property<int>(const xml_node& xml, std::string name, int default_value)
         {return xml.attribute(name.c_str()).as_int(default_value);}
         template<> bool _get_property<bool>(const xml_node& xml, std::string name, bool default_value)
@@ -55,7 +48,7 @@ namespace UIWarp
     struct Vec4i
     {
         int x, y, w, h;
-        bool operator==(const Vec4i& rhs) const { return x == rhs.x&&y == rhs.y; }
+        bool operator==(const Vec4i& rhs) const { return x == rhs.x && y == rhs.y; }
     };
     class Control :public Element
     {
@@ -64,11 +57,9 @@ namespace UIWarp
         Vec4i rect;
         std::string data, id, type;
         bool is_control() override { return true; }
-        template<typename T>
-        T get_property(std::string name, T default_value = T()) const
-        {
-            return _get_property<T>(m_xml, name, default_value);
-        }
+
+        template<typename T> T get_property(std::string name, T default_value = T()) const
+        {return _get_property<T>(m_xml, name, default_value);}
     private:
         xml_node m_xml;
     };
@@ -81,13 +72,12 @@ namespace UIWarp
         public:
             Iterator();
             Iterator(Layout parent, xml_node_iterator& begin, xml_node_iterator& end);
-            void operator++();
+            const Iterator& operator++();
             std::shared_ptr<Element> operator*() const;
             bool operator !=(Iterator i) const;
         private:
             std::shared_ptr<std::stack<IterInfo>> m_iters;
         };
-
         Layout(const xml_node& xml, Layout& parent)
             :m_layout(xml)
         {
@@ -121,9 +111,7 @@ namespace UIWarp
 
         template<typename T>
         T get_property(std::string name, T default_value=T()) const
-        {
-            return _get_property<T>(m_layout, name, default_value);
-        }
+        { return _get_property<T>(m_layout, name, default_value);}
 
     private:
         xml_node m_layout;
@@ -171,16 +159,14 @@ namespace UIWarp
         type = xml.name();
         assert(type == Type_Grid || type == Type_Table || type == Type_Control);
     }
-    void Layout::Iterator::operator++()
+    const Layout::Iterator& Layout::Iterator::operator++()
     {
         const xml_node& xml = *m_iters->top().begin;
         std::string type = xml.name();
 
         if (type == Type_Grid || type == Type_Table)   // container
         {
-            m_iters->push({ Layout(xml, m_iters->top().parent),
-                            xml.children().begin(), xml.children().end()
-                          });
+            m_iters->push({ Layout(xml, m_iters->top().parent), xml.children().begin(), xml.children().end()});
         }
         else // control
         {
@@ -193,6 +179,7 @@ namespace UIWarp
                 else break;
             }
         }
+        return *this;
     }
     bool Layout::Iterator::operator !=(Iterator i) const
     {
@@ -201,11 +188,10 @@ namespace UIWarp
         return m_iters->top().begin != i.m_iters->top().end;
     }
     Layout::Iterator::Iterator()
-    {
-        m_iters.reset(new std::stack<IterInfo>);
-    };
-    Layout::Iterator::Iterator(Layout parent, xml_node_iterator& begin, xml_node_iterator& end) { m_iters.reset(new std::stack<IterInfo>); m_iters->push({ parent, begin,end }); }
-    int resolve(std::string length, const Layout& parent, bool x)
+    { m_iters.reset(new std::stack<IterInfo>); }
+    Layout::Iterator::Iterator(Layout parent, xml_node_iterator& begin, xml_node_iterator& end)
+    { m_iters.reset(new std::stack<IterInfo>); m_iters->push({ parent, begin,end }); }
+    inline int resolve(std::string length, const Layout& parent, bool is_x)
     {
         int ret = 0;
         auto parts = split(length, '+');
@@ -235,12 +221,12 @@ namespace UIWarp
                 assert(false);
             }
             int length_abs = 0;
-            int selected_length = x ? parent.get_rect().w : parent.get_rect().h;
+            int selected_length = is_x ? parent.get_rect().w : parent.get_rect().h;
             switch (unit)
             {
             case Unit::cell:
                 assert(parent.get_type() == Type_Table); // unit cell can be only used in table
-                length_abs = static_cast<int>(num*selected_length / static_cast<double>(parent.get_property<int>(x ? "width-cell" : "height-cell")));
+                length_abs = static_cast<int>(num*selected_length / static_cast<double>(parent.get_property<int>(is_x ? "width-cell" : "height-cell")));
                 break;
             case Unit::px:
                 length_abs = num;
@@ -254,3 +240,4 @@ namespace UIWarp
         return ret;
     }
 }
+#endif
