@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<grid id="settings_menu" width="100%" height="100%">
+
+<table id="settings" width="80%" height="60%" x="10%" y="50%" width-cell="2" height-cell="4"> 
+    <control width="1c+-25px" height="15%" x="0c" y="0c"/>
+	<control width="1c+-25px" height="15%" x="0c" y="1c"/>
+	<control width="1c+-25px" height="15%" x="0c" y="2c"/>
+	<control width="1c+-25px" height="15%" x="1c+25px" y="0c"/>
+    <control width="1c+-25px" height="15%" x="1c+25px" y="1c"/>
+	<control width="1c+-25px" height="15%" x="1c+25px" y="2c"/>
+</table> 
+<table id="control" width="80%" height="10%" x="10%" y="10%" width-cell="2" height-cell="1"> 
+	<control id="close" width="1c+-25px" height="1c" x="0c" y="0c"/>
+	<control id="save" width="1c+-25px" height="1c" x="1c+25px" y="0c"/>
+</table> 
+</grid>

@@ -43,6 +43,7 @@ void print(Layout& layout)
 }
 struct Color { double r, g, b; };
 constexpr int win_w = 800, win_h = 600;
+Layout* layout_global_ref = nullptr;
 int main(int argc,char* argv[])
 {
     // Try to read layout from file
@@ -50,17 +51,23 @@ int main(int argc,char* argv[])
     xml.load_file(argv[1]);
     Layout layout(xml, { 0, 0, win_w, win_h });
     print(layout);
-
+    layout_global_ref=&layout;
     GLFWwindow* window;
 
     if (!glfwInit()) return -1;
     window = glfwCreateWindow(win_w, win_h, "Preview", nullptr, nullptr);
 
     glfwMakeContextCurrent(window);
+    glPushMatrix();
     glViewport(0, 0, win_w, win_h);
     glOrtho(0.0, win_w, 0.0, win_h, -10, 10);
     glClearColor(1.0, 1.0, 1.0, 1.0);
-    glfwSetWindowSizeCallback(window, [](GLFWwindow*, int w, int h) {glViewport(0, 0, w, h);});
+    glfwSetWindowSizeCallback(window, [](GLFWwindow*, int w, int h) {
+        glLoadIdentity();
+        glViewport(0, 0, w, h);
+        glOrtho(0.0, w, 0.0, h, -10, 10);
+        layout_global_ref->set_rect({ 0,0,w,h });
+    });
     unordered_map<string, Color> color_map;
     while (!glfwWindowShouldClose(window))
     {

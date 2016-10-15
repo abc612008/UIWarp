@@ -194,6 +194,7 @@ namespace UIWarp
     inline int resolve(std::string length, const Layout& parent, bool is_x)
     {
         int ret = 0;
+        int selected_length = is_x ? parent.get_rect().w : parent.get_rect().h;
         auto parts = split(length, '+');
         for (auto& part : parts)
         {
@@ -221,7 +222,6 @@ namespace UIWarp
                 assert(false);
             }
             int length_abs = 0;
-            int selected_length = is_x ? parent.get_rect().w : parent.get_rect().h;
             switch (unit)
             {
             case Unit::cell:
@@ -237,6 +237,7 @@ namespace UIWarp
             }
             ret += (neg ? -1 : 1)*length_abs;
         }
+        if (ret < 0)ret += selected_length;
         return ret;
     }
 }
